@@ -1,0 +1,14 @@
+<%#
+kind: PXELinux
+name: ESXi PXELinux
+oses:
+- ESXi 5
+- ESXi 5.5
+- ESXi 6
+%>
+
+DEFAULT linux
+LABEL linux
+KERNEL undionly.kpxe
+APPEND dhcp && chain <%= foreman_url('iPXE') %>
+IPAPPEND 2

@@ -1,0 +1,59 @@
+<%#
+kind: provision
+name: ESXi provision
+oses:
+- ESXi 5
+- ESXi 5.5
+- ESXi 6
+%>
+<%#
+This template accepts the following parameters:
+- ntp-server: string (default="0.pool.ntp.org")
+%>
+ 
+vmaccepteula
+ 
+# Set the root password
+rootpw --iscrypted <%= root_pass %>
+ 
+# Install ESX
+<%= @host.diskLayout %>
+ 
+# First interface IP configuration
+<% subnet = @host.subnet -%>
+<% identifier = @host.provision_interface.identifier.present? ? @host.provision_interface.identifier : 'vmnic0'%>
+<% if subnet.respond_to?(:dhcp_boot_mode?) && subnet.dhcp_boot_mode? -%>
+  network --bootproto=dhcp --device=<%= identifier -%>
+<% else -%>
+  network --bootproto=static --ip=<%= @host.ip -%> --gateway=<%= subnet.gateway -%> --nameserver=<%= subnet.dns_primary  -%> --netmask=<%= subnet.mask -%> --hostname=<%= @host.name -%> --device=<%= identifier -%> --addvmportgroup=0
+<% end -%>
+
+%post --interpreter=busybox
+#Notify foreman
+wget -q -O /dev/null <%= foreman_url %>
+reboot
+
+# Configure additional commands at first boot.
+%firstboot --interpreter=busybox
+ 
+#Enable shell access
+vim-cmd hostsvc/enable_ssh
+vim-cmd hostsvc/start_ssh 
+vim-cmd hostsvc/enable_esx_shell 
+vim-cmd hostsvc/start_esx_shell
+/adv/UserVars/SuppressShellWarning = "1"
+esxcli system settings advanced set -o /UserVars/SuppressShellWarning -i 1  
+ 
+#Enable NTP
+echo restrict default kod nomodify notrap noquerynopeer > /etc/ntp.conf
+echo restrict 127.0.0.1 >> /etc/ntp.conf
+echo server <%= @host.params['ntp-server'] || '0.pool.ntp.org' %> >> /etc/ntp.conf
+echo driftfile /var/lib/ntp/drift >> /etc/ntp.conf
+/sbin/chkconfig -level 345 ntpd on
+/etc/init.d/ntpd stop
+/etc/init.d/ntpd start
+
+#Add any additional esxcli commands here
+
+# Uncomment if making changes that require a reboot 
+# esxcli system shutdown reboot -d 60 -r "rebooting after host configurations"
