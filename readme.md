@@ -52,7 +52,7 @@ Post-setup steps such as joining to a cluster, configuring storage etc can be ad
 ```sh
 esxcli iscsi software set -e true
 ADAPTER=`esxcli iscsi adapter list | grep Software | awk '{print $1;}'`
-HOSTNAME=esx01-automation
+HOSTNAME=<%=@host.name%>
 esxcli iscsi adapter set -A $ADAPTER --name iqn.1998-01.com.vmware:$HOSTNAME
 
 esxcli iscsi networkportal add -A $ADAPTER -n vmk1
