@@ -9,5 +9,5 @@ oses:
 %>
 
 kernel -n mboot.c32 <%= @host.operatingsystem.medium_uri(@host) %>mboot.c32
-imgargs mboot.c32 -c <%= @host.operatingsystem.medium_uri(@host) %>boot.cfg text ks=<%=foreman_url("provision")%>; ignoreHeadless="True"
+imgargs mboot.c32 -c <%= @host.operatingsystem.medium_uri(@host) %>boot.cfg text ks=<%=foreman_url("provision")%> ignoreHeadless="True"
 boot mboot.c32
