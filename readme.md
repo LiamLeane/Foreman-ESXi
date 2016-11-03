@@ -4,7 +4,7 @@ These templates provision ESXi (tested on 5.5 & 6) with Foreman. While the VMWar
 
 ## Building an Install Repo
 
-Extract your install ISO to a friendly web server, this will be your OS media path in Foreman. If you are using a case sensitive OS for hosting, you will need to rename all the files & folders to lowercase as VMWare have used lowercase in config files;
+Extract your install ISO to a friendly web server, this will be your OS media path in Foreman. If you are using a case sensitive OS for hosting, you will need to rename all the files & folders to lowercase as VMWare have used lowercase in config files; (not needed in 6.0)
 ```sh
 find -depth -exec rename 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
 ```
@@ -14,20 +14,20 @@ The boot.cfg also requires some minor amends as it is set to look in the root of
 sed -i "s/\///g" boot.cfg
 ```
 
-Finally increase the timeout for loading files;
+Finally increase the timeout for loading files (6.0 already has this);
 ```sh
 echo "timeout=5" >> boot.cfg
 ```
 
 ## iPXE
 You will need to make two changes to iPXE in order for it to support booting the ESXi installer, and then make it;
-* src/arch/i386/image/multiboot.c change "MAX_MODULES 8" to "MAX_MODULES 100"
+* src/arch/x86/image/multiboot.c change "MAX_MODULES 8" to "MAX_MODULES 100"
 * src/config/local/general.h add "#define IMAGE_COMBOOT"
 
 This can be scripted as;
 ```sh
 git clone git://git.ipxe.org/ipxe.git
-sed -i "s/MAX_MODULES 8/MAX_MODULES 100/g" ipxe/src/arch/i386/image/multiboot.c
+sed -i "s/MAX_MODULES 8/MAX_MODULES 100/g" ipxe/src/arch/x86/image/multiboot.c
 echo "#define IMAGE_COMBOOT" >> ipxe/src/config/local/general.h
 cd ipxe/src
 make bin/undionly.kpxe
